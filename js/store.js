@@ -9,6 +9,7 @@ const Store = (() => {
   const uid = () => crypto.randomUUID();
   const today = () => new Date().toISOString().split('T')[0];
   const notify = () => window.dispatchEvent(new CustomEvent('nocual:update'));
+  const _q = p => p.then(({ error }) => { if (error) console.error(error); });
 
   const norm = {
     todo:  r => ({ id: r.id, text: r.text, priority: r.priority, done: r.done, createdAt: r.created_at, doneAt: r.done_at }),
@@ -70,7 +71,7 @@ const Store = (() => {
       const item = { id: uid(), text, priority, done: false, createdAt: Date.now(), doneAt: null };
       cache.todos.unshift(item);
       notify();
-      DB.from('todos').insert({ id: item.id, text, priority, done: false, created_at: item.createdAt, user_id: _userId }).catch(console.error);
+      _q(DB.from('todos').insert({ id: item.id, text, priority, done: false, created_at: item.createdAt, user_id: _userId }));
       return item;
     },
     toggle: (id) => {
@@ -80,12 +81,12 @@ const Store = (() => {
       const doneAt = done ? Date.now() : null;
       Object.assign(todo, { done, doneAt });
       notify();
-      DB.from('todos').update({ done, done_at: doneAt }).eq('id', id).catch(console.error);
+      _q(DB.from('todos').update({ done, done_at: doneAt }).eq('id', id));
     },
     delete: (id) => {
       cache.todos = cache.todos.filter(t => t.id !== id);
       notify();
-      DB.from('todos').delete().eq('id', id).catch(console.error);
+      _q(DB.from('todos').delete().eq('id', id));
     },
     update: (id, changes) => {
       const todo = cache.todos.find(t => t.id === id);
@@ -97,7 +98,7 @@ const Store = (() => {
       if ('priority' in changes) dbChanges.priority = changes.priority;
       if ('done'     in changes) dbChanges.done     = changes.done;
       if ('doneAt'   in changes) dbChanges.done_at  = changes.doneAt;
-      DB.from('todos').update(dbChanges).eq('id', id).catch(console.error);
+      _q(DB.from('todos').update(dbChanges).eq('id', id));
     },
   };
 
@@ -108,13 +109,13 @@ const Store = (() => {
       const block = { id: uid(), date, time, text };
       cache.scheduleBlocks.push(block);
       notify();
-      DB.from('schedule_blocks').insert({ id: block.id, date, time, text, user_id: _userId }).catch(console.error);
+      _q(DB.from('schedule_blocks').insert({ id: block.id, date, time, text, user_id: _userId }));
       return block;
     },
     deleteBlock: (date, blockId) => {
       cache.scheduleBlocks = cache.scheduleBlocks.filter(b => b.id !== blockId);
       notify();
-      DB.from('schedule_blocks').delete().eq('id', blockId).catch(console.error);
+      _q(DB.from('schedule_blocks').delete().eq('id', blockId));
     },
     getDaysWithEvents: () => [...new Set(cache.scheduleBlocks.map(b => b.date))],
   };
@@ -134,13 +135,13 @@ const Store = (() => {
       const tx = { id: uid(), type, amount: parseFloat(amount), description, account, createdAt: Date.now() };
       cache.transactions.unshift(tx);
       notify();
-      DB.from('transactions').insert({ id: tx.id, type, amount: tx.amount, description, account, created_at: tx.createdAt, user_id: _userId }).catch(console.error);
+      _q(DB.from('transactions').insert({ id: tx.id, type, amount: tx.amount, description, account, created_at: tx.createdAt, user_id: _userId }));
       return tx;
     },
     deleteTransaction: (id) => {
       cache.transactions = cache.transactions.filter(t => t.id !== id);
       notify();
-      DB.from('transactions').delete().eq('id', id).catch(console.error);
+      _q(DB.from('transactions').delete().eq('id', id));
     },
   };
 
@@ -151,13 +152,13 @@ const Store = (() => {
       const item = { id: uid(), name, amount: parseFloat(amount), frequency, account, createdAt: Date.now() };
       cache.recurring.push(item);
       notify();
-      DB.from('recurring').insert({ id: item.id, name, amount: item.amount, frequency, account, created_at: item.createdAt, user_id: _userId }).catch(console.error);
+      _q(DB.from('recurring').insert({ id: item.id, name, amount: item.amount, frequency, account, created_at: item.createdAt, user_id: _userId }));
       return item;
     },
     delete: (id) => {
       cache.recurring = cache.recurring.filter(r => r.id !== id);
       notify();
-      DB.from('recurring').delete().eq('id', id).catch(console.error);
+      _q(DB.from('recurring').delete().eq('id', id));
     },
   };
 
@@ -168,14 +169,14 @@ const Store = (() => {
       const item = { id: uid(), name, createdAt: Date.now() };
       cache.habits.push(item);
       notify();
-      DB.from('habits').insert({ id: item.id, name, created_at: item.createdAt, user_id: _userId }).catch(console.error);
+      _q(DB.from('habits').insert({ id: item.id, name, created_at: item.createdAt, user_id: _userId }));
       return item;
     },
     delete: (id) => {
       cache.habits    = cache.habits.filter(h => h.id !== id);
       cache.habitLogs = cache.habitLogs.filter(l => l.habitId !== id);
       notify();
-      DB.from('habits').delete().eq('id', id).catch(console.error);
+      _q(DB.from('habits').delete().eq('id', id));
     },
     isDoneToday: (id) => {
       const todayStr = today();
@@ -186,10 +187,10 @@ const Store = (() => {
       const idx = cache.habitLogs.findIndex(l => l.habitId === id && l.date === todayStr);
       if (idx >= 0) {
         cache.habitLogs.splice(idx, 1);
-        DB.from('habit_logs').delete().eq('habit_id', id).eq('date', todayStr).catch(console.error);
+        _q(DB.from('habit_logs').delete().eq('habit_id', id).eq('date', todayStr));
       } else {
         cache.habitLogs.push({ habitId: id, date: todayStr });
-        DB.from('habit_logs').insert({ id: uid(), habit_id: id, date: todayStr, user_id: _userId }).catch(console.error);
+        _q(DB.from('habit_logs').insert({ id: uid(), habit_id: id, date: todayStr, user_id: _userId }));
       }
       notify();
     },
@@ -213,7 +214,7 @@ const Store = (() => {
       const item = { id: uid(), text, weekLabel, createdAt: Date.now() };
       cache.roasts.unshift(item);
       notify();
-      DB.from('roasts').insert({ id: item.id, text, week_label: weekLabel, created_at: item.createdAt, user_id: _userId }).catch(console.error);
+      _q(DB.from('roasts').insert({ id: item.id, text, week_label: weekLabel, created_at: item.createdAt, user_id: _userId }));
       return item;
     },
   };
@@ -225,13 +226,13 @@ const Store = (() => {
       const msg = { role, content, timestamp: Date.now() };
       cache.chatHistory = [...cache.chatHistory, msg].slice(-50);
       notify();
-      DB.from('chat_history').insert({ id: uid(), role, content, timestamp: msg.timestamp, user_id: _userId }).catch(console.error);
+      _q(DB.from('chat_history').insert({ id: uid(), role, content, timestamp: msg.timestamp, user_id: _userId }));
       return msg;
     },
     clear: () => {
       cache.chatHistory = [];
       notify();
-      if (_userId) DB.from('chat_history').delete().eq('user_id', _userId).catch(console.error);
+      if (_userId) _q(DB.from('chat_history').delete().eq('user_id', _userId));
     },
   };
 
