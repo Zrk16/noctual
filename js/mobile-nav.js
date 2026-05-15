@@ -92,4 +92,41 @@
   });
 
   document.body.appendChild(nav);
+
+  // ── Feature 8: Pull-to-refresh ────────────────────────────────────────────
+  const pullIndicator = document.createElement('div');
+  pullIndicator.id = 'pull-indicator';
+  pullIndicator.textContent = '↻ Release to refresh';
+  document.body.appendChild(pullIndicator);
+
+  let pullStartY = 0;
+  let isPulling = false;
+  const PULL_THRESHOLD = 70;
+
+  document.addEventListener('touchstart', (e) => {
+    if (window.scrollY === 0) {
+      pullStartY = e.touches[0].clientY;
+      isPulling = true;
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!isPulling) return;
+    const dy = e.touches[0].clientY - pullStartY;
+    if (dy > PULL_THRESHOLD && window.scrollY === 0) {
+      pullIndicator.classList.add('pull-visible');
+    } else {
+      pullIndicator.classList.remove('pull-visible');
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchend', (e) => {
+    if (!isPulling) return;
+    const dy = e.changedTouches[0].clientY - pullStartY;
+    pullIndicator.classList.remove('pull-visible');
+    if (dy > PULL_THRESHOLD && window.scrollY === 0) {
+      location.reload();
+    }
+    isPulling = false;
+  });
 })();

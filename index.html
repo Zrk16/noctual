@@ -69,6 +69,7 @@
     <section class="home-greeting reveal" aria-label="Greeting">
       <h1 class="greeting__text" id="greeting-text">Good morning, Ziyaad.</h1>
       <p class="greeting__date" id="greeting-date"></p>
+      <span class="greeting__clock" id="greeting-time"></span>
     </section>
 
     <!-- Buddy message -->
@@ -79,6 +80,7 @@
           <span class="buddy-msg__name">Noc</span>
         </div>
         <p class="buddy-msg__text" id="buddy-msg-text"></p>
+        <div class="morning-msg" id="morning-msg"></div>
       </div>
     </section>
 
@@ -106,6 +108,14 @@
           <div class="stat-card__sub">done / total</div>
         </div>
       </div>
+    </section>
+
+    <!-- Streak widget -->
+    <section class="home-streaks reveal" aria-label="Habit streaks">
+      <div class="section-header">
+        <h2 class="section-title">Streaks</h2>
+      </div>
+      <div id="streak-list" class="streak-list"></div>
     </section>
 
     <!-- Schedule preview -->
@@ -158,5 +168,6 @@
   <script src="js/assistant.js" defer></script>
   <script src="js/home.js" defer></script>
   <script src="js/mobile-nav.js" defer></script>
+  <script src="js/transitions.js" defer></script>
 </body>
 </html>

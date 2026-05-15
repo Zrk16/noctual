@@ -24,6 +24,7 @@ const STATIC = [
   '/js/planner.js',
   '/js/finance.js',
   '/js/habits.js',
+  '/js/transitions.js',
   '/js/ai-pages.js',
   '/icons/icon-192.png',
   '/icons/icon-512.png',

@@ -22,6 +22,64 @@
     });
   }
 
+  // ── Feature 9: Skeleton loaders ───────────────────────────────────────────
+  function showSkeletons() {
+    listEl.innerHTML = Array(3).fill('<li class="habit-skeleton"></li>').join('');
+  }
+
+  // ── Feature 4: Heatmap ────────────────────────────────────────────────────
+  function renderHeatmap() {
+    const heatmapEl = document.getElementById('habit-heatmap');
+    if (!heatmapEl) return;
+
+    const logs = JSON.parse(localStorage.getItem('nocual_habit_logs') || '{}');
+    const today = new Date();
+    heatmapEl.innerHTML = '';
+
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      const count = (logs[key] || []).length;
+
+      const sq = document.createElement('div');
+      sq.className = 'habit-heatmap__square';
+      sq.title = `${key}: ${count} habit${count !== 1 ? 's' : ''} done`;
+
+      if (count === 0) {
+        sq.style.background = 'var(--surface-2)';
+      } else if (count <= 2) {
+        sq.style.background = 'rgba(200,144,58,0.3)';
+      } else if (count <= 4) {
+        sq.style.background = 'rgba(200,144,58,0.6)';
+      } else {
+        sq.style.background = 'var(--ai-accent)';
+      }
+
+      heatmapEl.appendChild(sq);
+    }
+  }
+
+  // ── Feature 6: Confetti ───────────────────────────────────────────────────
+  function launchConfetti() {
+    const colors = ['#C8903A', '#F2F0EB', '#e05252', '#4CAF50', '#2196F3'];
+    for (let i = 0; i < 40; i++) {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.cssText = `
+        left: ${Math.random() * 100}vw;
+        background: ${colors[Math.floor(Math.random() * colors.length)]};
+        animation-delay: ${Math.random() * 0.3}s;
+        animation-duration: ${0.8 + Math.random() * 0.4}s;
+      `;
+      document.body.appendChild(el);
+      el.addEventListener('animationend', () => el.remove());
+    }
+    try {
+      navigator.vibrate && navigator.vibrate([50, 30, 50, 30, 100]);
+    } catch {}
+  }
+
   // ── Render ─────────────────────────────────────────────────────────────────
   function renderHabits() {
     const habits = Store.habits.getAll();
@@ -36,6 +94,7 @@
     // Empty state
     if (totalCount === 0) {
       emptyEl.hidden = false;
+      renderHeatmap();
       return;
     }
     emptyEl.hidden = true;
@@ -46,12 +105,27 @@
       const itemEl   = buildHabitItem(habit, isDone, streak);
       listEl.appendChild(itemEl);
     });
+
+    renderHeatmap();
   }
 
   function buildHabitItem(habit, isDone, streak) {
     const li = document.createElement('li');
     li.className = 'habit-item' + (isDone ? ' habit-item--done' : '');
     li.dataset.id = habit.id;
+
+    // ── Feature 5: Swipe-to-delete wrapper ───────────────────────────────
+    const deleteBg = document.createElement('div');
+    deleteBg.className = 'habit-item__delete-bg';
+    deleteBg.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" width="18" height="18" stroke-width="2">
+        <polyline points="3 6 5 6 21 6"/>
+        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+        <path d="M10 11v6M14 11v6"/>
+      </svg>`;
+
+    const content = document.createElement('div');
+    content.className = 'habit-item__content';
 
     // Checkbox button
     const checkBtn = document.createElement('button');
@@ -68,7 +142,20 @@
     }
 
     checkBtn.addEventListener('click', () => {
+      // Feature 7: Haptic on check
+      try {
+        navigator.vibrate && navigator.vibrate([10, 30, 10]);
+      } catch {}
+
       Store.habits.toggleToday(habit.id);
+
+      // Feature 6: Check all done after toggle
+      const habits = Store.habits.getAll();
+      if (habits.length > 0) {
+        const allDone = habits.every(h => Store.habits.isDoneToday(h.id));
+        if (allDone) launchConfetti();
+      }
+
       renderHabits();
     });
 
@@ -112,10 +199,47 @@
       }
     });
 
-    li.appendChild(checkBtn);
-    li.appendChild(nameEl);
-    li.appendChild(streakEl);
-    li.appendChild(deleteBtn);
+    content.appendChild(checkBtn);
+    content.appendChild(nameEl);
+    content.appendChild(streakEl);
+    content.appendChild(deleteBtn);
+
+    li.appendChild(deleteBg);
+    li.appendChild(content);
+
+    // ── Feature 5: Touch swipe-to-delete ─────────────────────────────────
+    let touchStartX = 0;
+    let currentX = 0;
+    let isSwiping = false;
+
+    content.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+      isSwiping = false;
+      content.style.transition = 'none';
+    }, { passive: true });
+
+    content.addEventListener('touchmove', (e) => {
+      const dx = e.touches[0].clientX - touchStartX;
+      if (dx >= 0) return; // only swipe left
+      isSwiping = true;
+      currentX = Math.max(dx, -80);
+      content.style.transform = `translateX(${currentX}px)`;
+    }, { passive: true });
+
+    content.addEventListener('touchend', () => {
+      content.style.transition = 'transform 180ms ease';
+      if (isSwiping && currentX <= -60) {
+        content.style.transform = 'translateX(-80px)';
+        setTimeout(() => {
+          Store.habits.delete(habit.id);
+          renderHabits();
+        }, 150);
+      } else {
+        content.style.transform = 'translateX(0)';
+      }
+      currentX = 0;
+      isSwiping = false;
+    });
 
     return li;
   }
@@ -138,7 +262,12 @@
 
   // ── Init ──────────────────────────────────────────────────────────────────
   setSidebarDate();
-  renderHabits();
+
+  // Feature 9: Show skeletons first, then real render after 250ms
+  showSkeletons();
+  setTimeout(() => {
+    renderHabits();
+  }, 250);
 
   const revealEl = document.querySelector('.reveal');
   if (revealEl) {

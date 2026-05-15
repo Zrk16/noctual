@@ -248,3 +248,23 @@
 @media (min-width: 769px) {
   .mobile-nav { display: none !important; }
 }
+
+/* ─── Feature 8: Pull-to-refresh indicator ───────────────────────────────── */
+#pull-indicator {
+  position: fixed;
+  top: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-family: var(--font-body);
+  transition: top 180ms ease;
+  z-index: 999;
+  pointer-events: none;
+  white-space: nowrap;
+}
+#pull-indicator.pull-visible { top: 12px; }

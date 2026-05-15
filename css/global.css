@@ -546,3 +546,135 @@ select.input { appearance: none; cursor: pointer; }
   .assistant { left: 0; }
   .page-header__title { font-size: var(--font-size-xl); }
 }
+
+/* ─── Feature 1: Orb pulse when thinking ─────────────────────────────────── */
+.assistant__orb.orb--thinking {
+  animation: orb-pulse-thinking 800ms ease-in-out infinite;
+}
+@keyframes orb-pulse-thinking {
+  0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(200,144,58,0.4); }
+  50% { transform: scale(1.3); opacity: 0.8; box-shadow: 0 0 0 8px rgba(200,144,58,0); }
+}
+
+/* ─── Feature 2: Mic button ──────────────────────────────────────────────── */
+.assistant__mic {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: color var(--transition), background var(--transition), border-color var(--transition);
+}
+.assistant__mic:hover { color: var(--text); border-color: var(--text-muted); }
+.assistant__mic.mic--active {
+  color: var(--ai-accent);
+  border-color: var(--ai-border);
+  background: var(--ai-dim);
+}
+.assistant__mic svg { pointer-events: none; }
+
+/* ─── Feature 3: Undo chip ───────────────────────────────────────────────── */
+.undo-chip {
+  position: fixed;
+  bottom: calc(var(--assistant-h-collapsed) + 12px);
+  right: 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  cursor: pointer;
+  z-index: 999;
+  animation: chip-in 180ms ease forwards;
+  font-family: var(--font-body);
+  transition: background var(--transition), border-color var(--transition);
+}
+.undo-chip:hover { background: var(--surface); border-color: var(--text-muted); }
+@keyframes chip-in {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* ─── Feature 4: Habit heatmap ───────────────────────────────────────────── */
+.habit-heatmap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: var(--space-lg);
+}
+.habit-heatmap__square {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  cursor: default;
+  transition: opacity var(--transition);
+}
+.habit-heatmap__square:hover { opacity: 0.75; }
+
+/* ─── Feature 5: Swipe to delete ─────────────────────────────────────────── */
+.habit-item {
+  position: relative;
+  overflow: hidden;
+}
+.habit-item__content {
+  position: relative;
+  z-index: 1;
+  transition: transform 180ms ease;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.habit-item__delete-bg {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 8px;
+  width: 80px;
+  background: #e05252;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  color: #fff;
+}
+
+/* ─── Feature 6: Confetti ────────────────────────────────────────────────── */
+.confetti-piece {
+  position: fixed;
+  bottom: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  z-index: 9999;
+  pointer-events: none;
+  animation: confetti-rise linear forwards;
+}
+@keyframes confetti-rise {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+}
+
+/* ─── Feature 9: Skeleton loaders ───────────────────────────────────────── */
+.habit-skeleton {
+  height: 52px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  animation: skeleton-pulse 1.2s ease-in-out infinite;
+  margin-bottom: 8px;
+}
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}

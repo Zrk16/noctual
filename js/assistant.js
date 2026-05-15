@@ -2,6 +2,65 @@ const Assistant = (() => {
   let isOpen = false;
   let isLoading = false;
 
+  // ── Feature 3: Undo state ─────────────────────────────────────────────────
+  let lastAction = null;
+  let undoTimer = null;
+
+  const REVERSIBLE_ACTIONS = new Set([
+    'ADD_TODO', 'DELETE_TODO', 'COMPLETE_TODO',
+    'ADD_TRANSACTION', 'ADD_HABIT', 'COMPLETE_HABIT',
+  ]);
+
+  const showUndoChip = () => {
+    const existing = document.getElementById('undo-chip');
+    if (existing) existing.remove();
+    if (undoTimer) clearTimeout(undoTimer);
+
+    const chip = document.createElement('div');
+    chip.className = 'undo-chip';
+    chip.id = 'undo-chip';
+    chip.textContent = '↩ Undo';
+    chip.addEventListener('click', () => {
+      performUndo();
+      chip.remove();
+      if (undoTimer) clearTimeout(undoTimer);
+    });
+    document.body.appendChild(chip);
+
+    undoTimer = setTimeout(() => {
+      chip.remove();
+      lastAction = null;
+    }, 5000);
+  };
+
+  const performUndo = () => {
+    if (!lastAction) return;
+    const { type, payload, meta } = lastAction;
+    try {
+      switch (type) {
+        case 'ADD_TODO':
+          if (meta?.id) Store.todos.delete(meta.id);
+          break;
+        case 'DELETE_TODO':
+          if (payload?.text) Store.todos.add(payload.text, payload.priority ?? 'normal');
+          break;
+        case 'COMPLETE_TODO':
+          if (payload?.id) Store.todos.toggle(payload.id);
+          break;
+        case 'ADD_TRANSACTION':
+          // no clean delete API — best effort: dispatch update event
+          break;
+        case 'ADD_HABIT':
+          if (meta?.id) Store.habits.delete(meta.id);
+          break;
+        case 'COMPLETE_HABIT':
+          if (payload?.id) Store.habits.toggleToday(payload.id);
+          break;
+      }
+    } catch {}
+    lastAction = null;
+  };
+
   const parseAction = (text) => {
     const match = text.match(/\[ACTION\]([\s\S]*?)\[\/ACTION\]/i);
     if (!match) return { message: text, action: null };
@@ -17,10 +76,18 @@ const Assistant = (() => {
   const executeAction = (action) => {
     if (!action) return;
     const { type, payload } = action;
+
+    // Capture for undo before executing
+    if (REVERSIBLE_ACTIONS.has(type)) {
+      lastAction = { type, payload, meta: {} };
+    }
+
     switch (type) {
-      case 'ADD_TODO':
-        Store.todos.add(payload.text, payload.priority ?? 'normal');
+      case 'ADD_TODO': {
+        const todo = Store.todos.add(payload.text, payload.priority ?? 'normal');
+        if (lastAction) lastAction.meta.id = todo?.id ?? null;
         break;
+      }
       case 'DELETE_TODO':
         Store.todos.delete(payload.id);
         break;
@@ -39,9 +106,11 @@ const Assistant = (() => {
       case 'ADD_RECURRING':
         Store.recurring.add(payload.name, payload.amount, payload.frequency, payload.account);
         break;
-      case 'ADD_HABIT':
-        Store.habits.add(payload.name);
+      case 'ADD_HABIT': {
+        const habit = Store.habits.add(payload.name);
+        if (lastAction) lastAction.meta.id = habit?.id ?? null;
         break;
+      }
       case 'COMPLETE_HABIT':
         Store.habits.toggleToday(payload.id);
         break;
@@ -59,6 +128,10 @@ const Assistant = (() => {
         if (dest) window.location.href = dest;
         break;
       }
+    }
+
+    if (REVERSIBLE_ACTIONS.has(type)) {
+      showUndoChip();
     }
   };
 
@@ -108,6 +181,8 @@ const Assistant = (() => {
     sendBtn: document.getElementById('assistant-send'),
     expandBtn: document.getElementById('assistant-expand'),
     chat: document.getElementById('assistant-chat'),
+    orb: document.querySelector('.assistant__orb'),
+    mic: document.getElementById('assistant-mic'),
   });
 
   const appendMessage = (role, content) => {
@@ -149,7 +224,7 @@ const Assistant = (() => {
 
   const send = async () => {
     if (isLoading) return;
-    const { input, panel, chat } = getEls();
+    const { input, panel, chat, orb } = getEls();
     const text = input?.value.trim();
     if (!text) return;
 
@@ -164,6 +239,9 @@ const Assistant = (() => {
     Store.chat.addMessage('user', text);
 
     isLoading = true;
+
+    // Feature 1: Orb pulse while thinking
+    if (orb) orb.classList.add('orb--thinking');
 
     const msgEl = document.createElement('div');
     msgEl.className = 'chat-msg chat-msg--ai';
@@ -195,7 +273,62 @@ const Assistant = (() => {
       bubble.textContent = `something broke: ${err.message}`;
     } finally {
       isLoading = false;
+      // Feature 1: Stop orb pulse
+      if (orb) orb.classList.remove('orb--thinking');
     }
+  };
+
+  /* ── Feature 2: Voice input ────────────────────────────────────────────── */
+  const initMic = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const micBtn = document.getElementById('assistant-mic');
+    if (!micBtn) return;
+
+    if (!SpeechRecognition) {
+      micBtn.style.display = 'none';
+      return;
+    }
+
+    let recognition = null;
+    let isRecording = false;
+
+    micBtn.addEventListener('click', () => {
+      if (isRecording) {
+        recognition?.stop();
+        return;
+      }
+
+      recognition = new SpeechRecognition();
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognition.lang = 'en-US';
+
+      recognition.onstart = () => {
+        isRecording = true;
+        micBtn.classList.add('mic--active');
+      };
+
+      recognition.onresult = (e) => {
+        const transcript = e.results[0][0].transcript;
+        const input = document.getElementById('assistant-input');
+        if (input) {
+          input.value = transcript;
+          input.focus();
+        }
+      };
+
+      recognition.onend = () => {
+        isRecording = false;
+        micBtn.classList.remove('mic--active');
+      };
+
+      recognition.onerror = () => {
+        isRecording = false;
+        micBtn.classList.remove('mic--active');
+      };
+
+      recognition.start();
+    });
   };
 
   /* ── Specialized AI calls ──────────────────────────────────────────────── */
@@ -280,6 +413,26 @@ Keep it brief.`;
 
     const toggleBtn = document.getElementById('assistant-toggle');
     toggleBtn?.addEventListener('click', toggle);
+
+    // Feature 2: Insert mic button before send button
+    const micBtn = document.createElement('button');
+    micBtn.type = 'button';
+    micBtn.className = 'assistant__mic';
+    micBtn.id = 'assistant-mic';
+    micBtn.setAttribute('aria-label', 'Voice input');
+    micBtn.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" width="16" height="16" stroke-width="2">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        <line x1="12" y1="19" x2="12" y2="23"/>
+        <line x1="8" y1="23" x2="16" y2="23"/>
+      </svg>`;
+
+    if (sendBtn) {
+      sendBtn.parentNode.insertBefore(micBtn, sendBtn);
+    }
+
+    initMic();
   };
 
   return { init, toggle, send, generateRoast, generateHype, findThatThing };
