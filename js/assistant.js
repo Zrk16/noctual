@@ -66,49 +66,37 @@ const Assistant = (() => {
     const res = await fetch(`${CONFIG.NVIDIA_BASE_URL}/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: CONFIG.NVIDIA_MODEL, max_tokens: maxTokens, messages }),
+      body: JSON.stringify({
+        model: CONFIG.NVIDIA_MODEL,
+        max_tokens: maxTokens,
+        messages,
+      }),
     });
+
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error?.message ?? `API error ${res.status}`);
     }
+
     const data = await res.json();
     return data.choices[0]?.message?.content ?? '';
   };
 
-  const callNvidiaStream = async (messages, maxTokens = 512, onToken) => {
-    const res = await fetch(`${CONFIG.NVIDIA_BASE_URL}/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: CONFIG.NVIDIA_MODEL, max_tokens: maxTokens, messages }),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error?.message ?? `API error ${res.status}`);
-    }
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let full = '';
-    let buf = '';
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buf += decoder.decode(value, { stream: true });
-      const lines = buf.split('\n');
-      buf = lines.pop();
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const json = line.slice(6).trim();
-        if (json === '[DONE]') break;
-        try {
-          const token = JSON.parse(json).choices?.[0]?.delta?.content ?? '';
-          if (token) { full += token; onToken(token); }
-        } catch {}
-      }
-    }
-    return full;
-  };
+  const callClaude = async (userMessage) => {
+    const context = Store.getContext();
+    const history = Store.chat.getHistory().slice(-20);
 
+    const messages = [
+      { role: 'system', content: CONFIG.ASSISTANT_SYSTEM_PROMPT },
+      ...history.map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content })),
+      {
+        role: 'user',
+        content: `[Current data: ${JSON.stringify(context)}]\n\n${userMessage}`,
+      },
+    ];
+
+    return callNvidia(messages, 512);
+  };
 
   /* ── UI helpers ────────────────────────────────────────────────────────── */
   const getEls = () => ({
@@ -181,7 +169,7 @@ const Assistant = (() => {
 
   const send = async () => {
     if (isLoading) return;
-    const { input, panel, chat } = getEls();
+    const { input, panel } = getEls();
     const text = input?.value.trim();
     if (!text) return;
 
@@ -196,36 +184,18 @@ const Assistant = (() => {
     Store.chat.addMessage('user', text);
 
     isLoading = true;
-
-    // create streaming bubble immediately
-    const msgEl = document.createElement('div');
-    msgEl.className = 'chat-msg chat-msg--ai';
-    msgEl.innerHTML = `<div class="chat-msg__avatar"></div><div class="chat-msg__bubble"></div>`;
-    chat.appendChild(msgEl);
-    const bubble = msgEl.querySelector('.chat-msg__bubble');
-    chat.scrollTop = chat.scrollHeight;
-
-    const context = Store.getContext();
-    const history = Store.chat.getHistory().slice(-20);
-    const messages = [
-      { role: 'system', content: CONFIG.ASSISTANT_SYSTEM_PROMPT },
-      ...history.map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content })),
-      { role: 'user', content: `[Current data: ${JSON.stringify(context)}]\n\n${text}` },
-    ];
+    showThinking();
 
     try {
-      let raw = '';
-      await callNvidiaStream(messages, 512, (token) => {
-        raw += token;
-        bubble.innerHTML = raw.replace(/\n/g, '<br>');
-        chat.scrollTop = chat.scrollHeight;
-      });
+      const raw = await callClaude(text);
+      hideThinking();
       const { message, action } = parseAction(raw);
-      if (message !== raw) bubble.innerHTML = message.replace(/\n/g, '<br>');
+      appendMessage('ai', message || '...');
       Store.chat.addMessage('assistant', message || raw);
       if (action) executeAction(action);
     } catch (err) {
-      bubble.textContent = `something broke: ${err.message}`;
+      hideThinking();
+      appendMessage('ai', `something broke: ${err.message}`);
     } finally {
       isLoading = false;
     }

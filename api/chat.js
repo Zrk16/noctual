@@ -14,35 +14,15 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const body = { ...req.body, stream: true };
-
   const upstream = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify(req.body),
   });
 
-  if (!upstream.ok) {
-    const err = await upstream.json().catch(() => ({}));
-    res.status(upstream.status).json(err);
-    return;
-  }
-
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-
-  const reader = upstream.body.getReader();
-  const decoder = new TextDecoder();
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    res.write(decoder.decode(value, { stream: true }));
-  }
-
-  res.end();
-};
+  const data = await upstream.json();
+  res.status(upstream.status).json(data);
+}
