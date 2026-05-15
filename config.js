@@ -37,3 +37,7 @@ Only include an action block if the user actually asked you to do something. For
 
 Keep responses short. Match the energy. If they're stressed, be steady. If they're hype, match it. Never lecture.`,
 };
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+}
