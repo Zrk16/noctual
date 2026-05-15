@@ -193,8 +193,12 @@
       item.className = 'schedule__block';
       item.style.animationDelay = `${index * 40}ms`;
 
+      const timeLabel = block.endTime
+        ? `${formatTime(block.time)} – ${formatTime(block.endTime)}`
+        : formatTime(block.time);
+
       item.innerHTML = `
-        <div class="schedule__block-time">${formatTime(block.time)}</div>
+        <div class="schedule__block-time">${timeLabel}</div>
         <div class="schedule__block-text">${escapeHtml(block.text)}</div>
         <button class="schedule__block-delete" aria-label="Delete block" data-id="${block.id}">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -216,32 +220,72 @@
 
   // ─── Block form ───────────────────────────────────────────────────────────────
 
+  function buildTimeSelects(startHEl, startMEl, endHEl, endMEl) {
+    const hourLabels = [];
+    for (let h = 0; h < 24; h++) {
+      const period = h >= 12 ? 'PM' : 'AM';
+      const label = `${h % 12 || 12} ${period}`;
+      hourLabels.push({ val: String(h).padStart(2, '0'), label });
+    }
+    const minOptions = [
+      { val: '00', label: ':00' },
+      { val: '15', label: ':15' },
+      { val: '30', label: ':30' },
+      { val: '45', label: ':45' },
+    ];
+
+    [startHEl, endHEl].forEach(sel => {
+      hourLabels.forEach(({ val, label }) => {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = label;
+        sel.appendChild(opt);
+      });
+    });
+    [startMEl, endMEl].forEach(sel => {
+      minOptions.forEach(({ val, label }) => {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = label;
+        sel.appendChild(opt);
+      });
+    });
+  }
+
   function initBlockForm() {
     const form = document.getElementById('block-form');
     if (!form) return;
 
-    // Default time to current hour
+    const startHEl = document.getElementById('block-start-h');
+    const startMEl = document.getElementById('block-start-m');
+    const endHEl   = document.getElementById('block-end-h');
+    const endMEl   = document.getElementById('block-end-m');
+
+    buildTimeSelects(startHEl, startMEl, endHEl, endMEl);
+
+    // Default: current hour → current hour + 1
     const now = new Date();
-    const timeInput = document.getElementById('block-time');
-    if (timeInput) {
-      timeInput.value = `${String(now.getHours()).padStart(2, '0')}:00`;
-    }
+    const curH = now.getHours();
+    startHEl.value = String(curH).padStart(2, '0');
+    startMEl.value = '00';
+    endHEl.value   = String((curH + 1) % 24).padStart(2, '0');
+    endMEl.value   = '00';
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      const time = document.getElementById('block-time').value;
-      const text = document.getElementById('block-text').value.trim();
-      if (!time || !text) return;
+      const time    = `${startHEl.value}:${startMEl.value}`;
+      const endTime = `${endHEl.value}:${endMEl.value}`;
+      const text    = document.getElementById('block-text').value.trim();
+      if (!text) return;
 
       if (typeof Store !== 'undefined' && Store.schedule && Store.schedule.addBlock) {
-        Store.schedule.addBlock(state.selectedDate, time, text);
+        Store.schedule.addBlock(state.selectedDate, time, endTime, text);
       }
 
       document.getElementById('block-text').value = '';
       renderSchedule();
       renderCalendar();
 
-      // Animate the new block
       const list = document.getElementById('schedule-list');
       if (list && list.lastElementChild) {
         list.lastElementChild.classList.add('schedule__block--new');

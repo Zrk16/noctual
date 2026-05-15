@@ -105,7 +105,13 @@
         </div>
 
         <form class="block-form" id="block-form">
-          <input type="time" class="block-form__time input" id="block-time" required aria-label="Block time">
+          <div class="block-form__time-wrap">
+            <select class="block-form__sel input" id="block-start-h" aria-label="Start hour"></select>
+            <select class="block-form__sel input" id="block-start-m" aria-label="Start minute"></select>
+            <span class="block-form__arrow">→</span>
+            <select class="block-form__sel input" id="block-end-h" aria-label="End hour"></select>
+            <select class="block-form__sel input" id="block-end-m" aria-label="End minute"></select>
+          </div>
           <input type="text" class="block-form__text input" id="block-text" placeholder="What's happening..." required aria-label="Block description">
           <button type="submit" class="btn btn--primary">Add</button>
         </form>

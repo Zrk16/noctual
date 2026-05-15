@@ -204,6 +204,29 @@
   font-size: var(--font-size-xs);
 }
 
+.block-form__time-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.block-form__sel {
+  width: 76px;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  padding-right: var(--space-xs);
+}
+
+.block-form__arrow {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--text-dim);
+  flex-shrink: 0;
+  user-select: none;
+}
+
 .block-form__text {
   flex: 1;
 }
@@ -251,9 +274,11 @@
   font-family: var(--font-mono);
   font-size: var(--font-size-xs);
   color: var(--ai-accent);
-  width: 60px;
+  width: auto;
+  min-width: 60px;
   flex-shrink: 0;
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .schedule__block-text {

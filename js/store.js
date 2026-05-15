@@ -14,7 +14,7 @@ const Store = (() => {
 
   const norm = {
     todo:  r => ({ id: r.id, text: r.text, priority: r.priority, done: r.done, createdAt: r.created_at, doneAt: r.done_at }),
-    block: r => ({ id: r.id, date: r.date, time: r.time, text: r.text }),
+    block: r => ({ id: r.id, date: r.date, time: r.time, endTime: r.end_time ?? null, text: r.text }),
     tx:    r => ({ id: r.id, type: r.type, amount: r.amount, description: r.description, account: r.account, createdAt: r.created_at }),
     rec:   r => ({ id: r.id, name: r.name, amount: r.amount, frequency: r.frequency, account: r.account, createdAt: r.created_at }),
     habit: r => ({ id: r.id, name: r.name, createdAt: r.created_at }),
@@ -113,11 +113,11 @@ const Store = (() => {
   /* ── Schedule ──────────────────────────────────────────────────────────── */
   const schedule = {
     getDay: (date) => cache.scheduleBlocks.filter(b => b.date === date).sort((a, b) => a.time.localeCompare(b.time)),
-    addBlock: (date, time, text) => {
-      const block = { id: uid(), date, time, text };
+    addBlock: (date, time, endTime, text) => {
+      const block = { id: uid(), date, time, endTime: endTime || null, text };
       cache.scheduleBlocks.push(block);
       notify();
-      _q(DB.from('schedule_blocks').insert({ id: block.id, date, time, text, user_id: _userId }));
+      _q(DB.from('schedule_blocks').insert({ id: block.id, date, time, end_time: endTime || null, text, user_id: _userId }));
       return block;
     },
     deleteBlock: (date, blockId) => {
