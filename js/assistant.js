@@ -3,11 +3,11 @@ const Assistant = (() => {
   let isLoading = false;
 
   const parseAction = (text) => {
-    const match = text.match(/<action>([\s\S]*?)<\/action>/);
+    const match = text.match(/\[ACTION\]([\s\S]*?)\[\/ACTION\]/i);
     if (!match) return { message: text, action: null };
     try {
       const action = JSON.parse(match[1].trim());
-      const message = text.replace(/<action>[\s\S]*?<\/action>/, '').trim();
+      const message = text.replace(/\[ACTION\][\s\S]*?\[\/ACTION\]/i, '').trim();
       return { message, action };
     } catch {
       return { message: text, action: null };
