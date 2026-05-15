@@ -1,7 +1,7 @@
 const CONFIG = {
   NVIDIA_API_KEY: null, // stored in Vercel env var NVIDIA_API_KEY — never expose in frontend
   NVIDIA_BASE_URL: '/api',
-  NVIDIA_MODEL: 'meta/llama-3.1-8b-instruct',
+  NVIDIA_MODEL: 'llama-3.1-8b-instant',
 
   OBSIDIAN_ENABLED: false,
   OBSIDIAN_VAULT_PATH: '',

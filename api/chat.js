@@ -8,15 +8,15 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const apiKey = process.env.NVIDIA_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    res.status(500).json({ error: 'NVIDIA_API_KEY not set' });
+    res.status(500).json({ error: 'GROQ_API_KEY not set' });
     return;
   }
 
   const body = { ...req.body, stream: true };
 
-  const upstream = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+  const upstream = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
