@@ -340,10 +340,7 @@
 .habit-item:hover .habit-item__delete { opacity: 1; }
 
 .add-habit-form {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-lg);
   display: flex;
   gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
 }
