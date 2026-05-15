@@ -176,6 +176,26 @@
 .btn--spend:hover { background: rgba(224, 90, 90, 0.2); opacity: 1; }
 
 /* ─── Recurring income ────────────────────────────────────────────────────── */
+.recurring-add {
+  margin-top: var(--space-md);
+  display: grid;
+  grid-template-columns: 1fr 100px 120px 120px auto;
+  gap: var(--space-sm);
+  align-items: end;
+}
+
+.recurring-add .form-group { margin-bottom: 0; }
+.recurring-add .btn { white-space: nowrap; }
+
+@media (max-width: 768px) {
+  .recurring-add {
+    grid-template-columns: 1fr 1fr;
+  }
+  .recurring-add .btn {
+    grid-column: 1 / -1;
+  }
+}
+
 .recurring-section {
   background: var(--surface-2);
   border: 1px solid var(--border);
