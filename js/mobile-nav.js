@@ -33,23 +33,62 @@
       active: page === 'habits.html',
       icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>`,
     },
-    {
-      href: 'roast.html',
-      label: 'AI',
-      active: isAI,
-      ai: true,
-      icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
-    },
   ];
 
-  links.forEach(({ href, label, active, ai, icon }) => {
+  links.forEach(({ href, label, active, icon }) => {
     const a = document.createElement('a');
     a.href = href;
-    a.className = 'mobile-nav__item' +
-      (ai ? ' mobile-nav__item--ai' : '') +
-      (active ? ' mobile-nav__item--active' : '');
+    a.className = 'mobile-nav__item' + (active ? ' mobile-nav__item--active' : '');
     a.innerHTML = icon + `<span>${label}</span>`;
     nav.appendChild(a);
+  });
+
+  // AI tab with popup
+  const aiActive = isAI;
+  const aiTab = document.createElement('button');
+  aiTab.className = 'mobile-nav__item mobile-nav__item--ai' + (aiActive ? ' mobile-nav__item--active' : '');
+  aiTab.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span>AI</span>`;
+  nav.appendChild(aiTab);
+
+  // AI popup sheet
+  const sheet = document.createElement('div');
+  sheet.className = 'mobile-ai-sheet';
+  sheet.innerHTML = `
+    <a href="roast.html" class="mobile-ai-sheet__item${page === 'roast.html' ? ' active' : ''}">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div>
+        <div class="mobile-ai-sheet__name">Roast Me</div>
+        <div class="mobile-ai-sheet__desc">get called out for your week</div>
+      </div>
+    </a>
+    <a href="hype.html" class="mobile-ai-sheet__item${page === 'hype.html' ? ' active' : ''}">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      <div>
+        <div class="mobile-ai-sheet__name">Hype</div>
+        <div class="mobile-ai-sheet__desc">get hyped up for what you're doing</div>
+      </div>
+    </a>
+    <a href="that-thing.html" class="mobile-ai-sheet__item${page === 'that-thing.html' ? ' active' : ''}">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <div>
+        <div class="mobile-ai-sheet__name">That Thing</div>
+        <div class="mobile-ai-sheet__desc">find something you half-remember</div>
+      </div>
+    </a>
+  `;
+  document.body.appendChild(sheet);
+
+  let sheetOpen = false;
+  aiTab.addEventListener('click', () => {
+    sheetOpen = !sheetOpen;
+    sheet.classList.toggle('is-open', sheetOpen);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (sheetOpen && !sheet.contains(e.target) && e.target !== aiTab) {
+      sheetOpen = false;
+      sheet.classList.remove('is-open');
+    }
   });
 
   document.body.appendChild(nav);

@@ -161,6 +161,74 @@
   }
 }
 
+/* ─── AI popup sheet ────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .mobile-ai-sheet {
+    position: fixed;
+    bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px));
+    left: var(--space-sm);
+    right: var(--space-sm);
+    background: var(--surface);
+    border: 1px solid var(--ai-border);
+    border-radius: var(--radius-lg);
+    z-index: 299;
+    padding: var(--space-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transform: translateY(12px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms ease, transform 180ms ease;
+  }
+
+  .mobile-ai-sheet.is-open {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: all;
+  }
+
+  .mobile-ai-sheet__item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: background var(--transition), color var(--transition);
+  }
+
+  .mobile-ai-sheet__item:hover,
+  .mobile-ai-sheet__item.active {
+    background: var(--ai-dim);
+    color: var(--ai-accent);
+  }
+
+  .mobile-ai-sheet__item svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 1.75;
+    flex-shrink: 0;
+  }
+
+  .mobile-ai-sheet__name {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .mobile-ai-sheet__item.active .mobile-ai-sheet__name {
+    color: var(--ai-accent);
+  }
+
+  .mobile-ai-sheet__desc {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+  }
+}
+
 /* ─── Hide mobile nav on desktop ─────────────────────────────────────────── */
 @media (min-width: 769px) {
   .mobile-nav { display: none !important; }
