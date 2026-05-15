@@ -210,6 +210,10 @@ body::after {
 }
 
 .page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-md);
   margin-bottom: var(--space-xl);
 }
 
