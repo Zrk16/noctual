@@ -344,3 +344,18 @@
   gap: var(--space-sm);
   margin-bottom: var(--space-lg);
 }
+
+.add-habit-form__input {
+  flex: 1;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  padding: 0.625rem var(--space-md);
+  outline: none;
+  transition: border-color var(--transition);
+}
+.add-habit-form__input:focus { border-color: var(--text-muted); }
+.add-habit-form__input::placeholder { color: var(--text-dim); }

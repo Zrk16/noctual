@@ -154,6 +154,13 @@
   }
 }
 
+/* ─── Prevent iOS zoom on input focus ────────────────────────────────────── */
+@media (max-width: 768px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
 /* ─── Hide mobile nav on desktop ─────────────────────────────────────────── */
 @media (min-width: 769px) {
   .mobile-nav { display: none !important; }
