@@ -2,6 +2,7 @@ const Store = (() => {
   const cache = {
     todos: [], scheduleBlocks: [], transactions: [], recurring: [],
     habits: [], habitLogs: [], roasts: [], chatHistory: [],
+    notes: [], noteLinks: [],
   };
   let _userId = null;
   let _realtimeChannel = null;
@@ -20,12 +21,15 @@ const Store = (() => {
     log:   r => ({ habitId: r.habit_id, date: r.date }),
     roast: r => ({ id: r.id, text: r.text, weekLabel: r.week_label, createdAt: r.created_at }),
     chat:  r => ({ role: r.role, content: r.content, timestamp: r.timestamp }),
+    note:  r => ({ id: r.id, title: r.title, content: r.content, createdAt: r.created_at, updatedAt: r.updated_at }),
+    link:  r => ({ from: r.from_note_id, to: r.to_note_id }),
   };
 
   async function _refresh() {
     const [
       { data: todosData }, { data: blocksData }, { data: txData }, { data: recData },
       { data: habitsData }, { data: logsData }, { data: roastsData }, { data: chatData },
+      { data: notesData }, { data: linksData },
     ] = await Promise.all([
       DB.from('todos').select('*').order('created_at', { ascending: false }),
       DB.from('schedule_blocks').select('*'),
@@ -35,6 +39,8 @@ const Store = (() => {
       DB.from('habit_logs').select('*'),
       DB.from('roasts').select('*').order('created_at', { ascending: false }),
       DB.from('chat_history').select('*').order('timestamp', { ascending: true }).limit(50),
+      DB.from('notes').select('*').order('updated_at', { ascending: false }),
+      DB.from('note_links').select('*'),
     ]);
     cache.todos        = (todosData   ?? []).map(norm.todo);
     cache.scheduleBlocks = (blocksData ?? []).map(norm.block);
@@ -44,6 +50,8 @@ const Store = (() => {
     cache.habitLogs    = (logsData    ?? []).map(norm.log);
     cache.roasts       = (roastsData  ?? []).map(norm.roast);
     cache.chatHistory  = (chatData    ?? []).map(norm.chat);
+    cache.notes        = (notesData   ?? []).map(norm.note);
+    cache.noteLinks    = (linksData   ?? []).map(norm.link);
     notify();
   }
 
@@ -236,6 +244,52 @@ const Store = (() => {
     },
   };
 
+  /* ── Notes ────────────────────────────────────────────────────────────── */
+  const notes = {
+    getAll: () => cache.notes,
+    add: (title, content) => {
+      const item = { id: uid(), title, content, createdAt: Date.now(), updatedAt: Date.now() };
+      cache.notes.unshift(item);
+      notify();
+      _q(DB.from('notes').insert({ id: item.id, title, content, created_at: item.createdAt, updated_at: item.updatedAt, user_id: _userId }));
+      return item;
+    },
+    update: (id, changes) => {
+      const note = cache.notes.find(n => n.id === id);
+      if (!note) return;
+      Object.assign(note, changes);
+      notify();
+      const dbChanges = { updated_at: Date.now() };
+      if ('title'   in changes) dbChanges.title   = changes.title;
+      if ('content' in changes) dbChanges.content  = changes.content;
+      _q(DB.from('notes').update(dbChanges).eq('id', id));
+    },
+    delete: (id) => {
+      cache.notes     = cache.notes.filter(n => n.id !== id);
+      cache.noteLinks = cache.noteLinks.filter(l => l.from !== id && l.to !== id);
+      notify();
+      _q(DB.from('notes').delete().eq('id', id));
+      _q(DB.from('note_links').delete().or(`from_note_id.eq.${id},to_note_id.eq.${id}`));
+    },
+    getLinks: (id) => {
+      return cache.noteLinks
+        .filter(l => l.from === id || l.to === id)
+        .map(l => l.from === id ? l.to : l.from);
+    },
+    getAllLinks: () => cache.noteLinks,
+    setLinks: async (connections) => {
+      if (!_userId) return;
+      // replace all links in DB and cache
+      cache.noteLinks = connections.map(c => ({ from: c.from, to: c.to }));
+      notify();
+      await DB.from('note_links').delete().eq('user_id', _userId);
+      if (connections.length > 0) {
+        const rows = connections.map(c => ({ id: uid(), from_note_id: c.from, to_note_id: c.to, user_id: _userId }));
+        _q(DB.from('note_links').insert(rows));
+      }
+    },
+  };
+
   /* ── Full context snapshot (for AI) ───────────────────────────────────── */
   const getContext = () => ({
     date: today(),
@@ -254,5 +308,5 @@ const Store = (() => {
     })),
   });
 
-  return { todos, schedule, finances, recurring, habits, roasts, chat, getContext };
+  return { todos, schedule, finances, recurring, habits, roasts, chat, notes, getContext };
 })();

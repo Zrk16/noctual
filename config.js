@@ -34,7 +34,7 @@ Available action types:
 - ADD_RECURRING: { "name": string, "amount": number, "frequency": "daily"|"weekly"|"monthly", "account": "gcash"|"card"|"cash" }
 - ADD_HABIT: { "name": string }
 - COMPLETE_HABIT: { "id": string }
-- NAVIGATE: { "page": "home"|"planner"|"finance"|"roast"|"hype"|"that-thing"|"habits" }
+- NAVIGATE: { "page": "home"|"planner"|"finance"|"roast"|"hype"|"that-thing"|"habits"|"notes" }
 
 Only include an action block if the user actually asked you to do something. For questions or chat, respond normally without an action block.
 

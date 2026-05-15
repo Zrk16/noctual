@@ -123,6 +123,7 @@ const Assistant = (() => {
           hype: 'hype.html',
           'that-thing': 'that-thing.html',
           habits: 'habits.html',
+          notes: 'notes.html',
         };
         const dest = pages[payload.page];
         if (dest) window.location.href = dest;
