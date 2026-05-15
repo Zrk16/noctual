@@ -10,7 +10,7 @@ const Store = (() => {
   const uid = () => crypto.randomUUID();
   const today = () => new Date().toISOString().split('T')[0];
   const notify = () => window.dispatchEvent(new CustomEvent('nocual:update'));
-  const _q = p => p.then(({ error }) => { if (error) console.error(error); });
+  const _q = p => p.then(({ error }) => { if (error) console.error('[Store write]', error); }).catch(e => console.error('[Store write]', e));
 
   const norm = {
     todo:  r => ({ id: r.id, text: r.text, priority: r.priority, done: r.done, createdAt: r.created_at, doneAt: r.done_at }),
@@ -26,41 +26,64 @@ const Store = (() => {
   };
 
   async function _refresh() {
-    const [
-      { data: todosData }, { data: blocksData }, { data: txData }, { data: recData },
-      { data: habitsData }, { data: logsData }, { data: roastsData }, { data: chatData },
-      { data: notesData }, { data: linksData },
-    ] = await Promise.all([
-      DB.from('todos').select('*').order('created_at', { ascending: false }),
-      DB.from('schedule_blocks').select('*'),
-      DB.from('transactions').select('*').order('created_at', { ascending: false }),
-      DB.from('recurring').select('*').order('created_at', { ascending: true }),
-      DB.from('habits').select('*').order('created_at', { ascending: true }),
-      DB.from('habit_logs').select('*'),
-      DB.from('roasts').select('*').order('created_at', { ascending: false }),
-      DB.from('chat_history').select('*').order('timestamp', { ascending: true }).limit(50),
-      DB.from('notes').select('*').order('updated_at', { ascending: false }),
-      DB.from('note_links').select('*'),
-    ]);
-    cache.todos        = (todosData   ?? []).map(norm.todo);
-    cache.scheduleBlocks = (blocksData ?? []).map(norm.block);
-    cache.transactions = (txData      ?? []).map(norm.tx);
-    cache.recurring    = (recData     ?? []).map(norm.rec);
-    cache.habits       = (habitsData  ?? []).map(norm.habit);
-    cache.habitLogs    = (logsData    ?? []).map(norm.log);
-    cache.roasts       = (roastsData  ?? []).map(norm.roast);
-    cache.chatHistory  = (chatData    ?? []).map(norm.chat);
-    cache.notes        = (notesData   ?? []).map(norm.note);
-    cache.noteLinks    = (linksData   ?? []).map(norm.link);
+    const queries = [
+      ['todos',           DB.from('todos').select('*').order('created_at', { ascending: false })],
+      ['scheduleBlocks',  DB.from('schedule_blocks').select('*')],
+      ['transactions',    DB.from('transactions').select('*').order('created_at', { ascending: false })],
+      ['recurring',       DB.from('recurring').select('*').order('created_at', { ascending: true })],
+      ['habits',          DB.from('habits').select('*').order('created_at', { ascending: true })],
+      ['habitLogs',       DB.from('habit_logs').select('*')],
+      ['roasts',          DB.from('roasts').select('*').order('created_at', { ascending: false })],
+      ['chatHistory',     DB.from('chat_history').select('*').order('timestamp', { ascending: true }).limit(50)],
+      ['notes',           DB.from('notes').select('*').order('updated_at', { ascending: false })],
+      ['noteLinks',       DB.from('note_links').select('*')],
+    ];
+
+    const results = await Promise.allSettled(queries.map(([, q]) => q));
+    const normMap = {
+      todos: norm.todo, scheduleBlocks: norm.block, transactions: norm.tx,
+      recurring: norm.rec, habits: norm.habit, habitLogs: norm.log,
+      roasts: norm.roast, chatHistory: norm.chat, notes: norm.note, noteLinks: norm.link,
+    };
+
+    queries.forEach(([key], i) => {
+      const result = results[i];
+      if (result.status === 'rejected') {
+        console.error(`[Store] ${key} query threw:`, result.reason);
+        return;
+      }
+      const { data, error } = result.value;
+      if (error) {
+        console.error(`[Store] ${key} query error:`, error);
+        return;
+      }
+      cache[key] = (data ?? []).map(normMap[key]);
+    });
+
     notify();
   }
 
   async function _init() {
-    const { data: { session } } = await DB.auth.getSession();
-    _userId = session?.user?.id ?? null;
-    if (!_userId) return;
-    await _refresh();
-    _setupRealtime();
+    try {
+      const { data: { session } } = await DB.auth.getSession();
+      _userId = session?.user?.id ?? null;
+      if (_userId) {
+        await _refresh();
+        _setupRealtime();
+      }
+      DB.auth.onAuthStateChange(async (_event, session) => {
+        const newId = session?.user?.id ?? null;
+        if (newId && newId !== _userId) {
+          _userId = newId;
+          await _refresh();
+          _setupRealtime();
+        } else if (!newId) {
+          _userId = null;
+        }
+      });
+    } catch (e) {
+      console.error('[Store] init failed:', e);
+    }
   }
 
   function _setupRealtime() {
