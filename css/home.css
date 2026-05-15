@@ -1,0 +1,183 @@
+/* ─── Home page ───────────────────────────────────────────────────────────── */
+
+.home-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: var(--space-xl);
+}
+
+/* ─── Greeting hero ───────────────────────────────────────────────────────── */
+.greeting {
+  grid-column: 1 / -1;
+  padding: var(--space-2xl) 0 var(--space-xl);
+}
+
+.greeting__time {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-sm);
+}
+
+.greeting__text {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  color: var(--text);
+}
+
+.greeting__sub {
+  font-size: var(--font-size-base);
+  color: var(--text-muted);
+  margin-top: var(--space-sm);
+  max-width: 480px;
+}
+
+/* ─── AI buddy message ────────────────────────────────────────────────────── */
+.buddy-msg {
+  grid-column: 1 / -1;
+  background: var(--ai-dim);
+  border: 1px solid var(--ai-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg) var(--space-xl);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-lg);
+}
+
+.buddy-msg__orb {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--ai-accent);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.buddy-msg__content {}
+
+.buddy-msg__label {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--ai-accent);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-xs);
+}
+
+.buddy-msg__text {
+  font-size: var(--font-size-base);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* ─── Stat cards ──────────────────────────────────────────────────────────── */
+.stat-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+}
+.stat-card:hover { border-color: var(--text-dim); background: #202019; }
+
+.stat-card__label {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.stat-card__value {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-2xl);
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.stat-card__sub {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin-top: auto;
+  padding-top: var(--space-sm);
+}
+
+.stat-card--money .stat-card__value { color: #7CB98A; }
+
+/* ─── Quick schedule preview ──────────────────────────────────────────────── */
+.schedule-preview {
+  grid-column: 1 / -1;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+}
+
+.schedule-preview__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.schedule-preview__title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.schedule-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) 0;
+  border-bottom: 1px solid var(--border);
+}
+.schedule-item:last-child { border-bottom: none; }
+
+.schedule-item__time {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  width: 60px;
+  flex-shrink: 0;
+}
+
+.schedule-item__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.schedule-item__dot--active { background: var(--ai-accent); }
+
+.schedule-item__text {
+  font-size: var(--font-size-sm);
+  color: var(--text);
+}
+
+.empty-state {
+  text-align: center;
+  padding: var(--space-xl) 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+@media (max-width: 640px) {
+  .home-grid { grid-template-columns: 1fr; }
+}

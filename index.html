@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nocual — Home</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/home.css">
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar__logo">
+      <div class="sidebar__logo-text">Nocual</div>
+      <div class="sidebar__logo-sub">personal OS</div>
+    </div>
+    <nav class="sidebar__nav">
+      <span class="sidebar__section-label">Overview</span>
+      <a href="index.html" class="nav-link nav-link--active">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Home
+      </a>
+      <a href="planner.html" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Planner
+      </a>
+      <a href="finance.html" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Finance
+      </a>
+      <a href="habits.html" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Habits
+      </a>
+      <span class="sidebar__section-label">AI</span>
+      <a href="roast.html" class="nav-link nav-link--ai">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Roast Me
+      </a>
+      <a href="hype.html" class="nav-link nav-link--ai">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Hype
+      </a>
+      <a href="that-thing.html" class="nav-link nav-link--ai">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        That Thing
+      </a>
+    </nav>
+    <div class="sidebar__bottom">
+      <div class="sidebar__date" id="sidebar-date"></div>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main">
+
+    <!-- Greeting -->
+    <section class="home-greeting reveal" aria-label="Greeting">
+      <h1 class="greeting__text" id="greeting-text">Good morning, Ziyaad.</h1>
+      <p class="greeting__date" id="greeting-date"></p>
+    </section>
+
+    <!-- Buddy message -->
+    <section class="home-buddy reveal" aria-label="Assistant message">
+      <div class="buddy-msg" id="buddy-msg">
+        <div class="buddy-msg__header">
+          <div class="buddy-orb"></div>
+          <span class="buddy-msg__name">Noc</span>
+        </div>
+        <p class="buddy-msg__text" id="buddy-msg-text"></p>
+      </div>
+    </section>
+
+    <!-- Stat cards -->
+    <section class="home-stats reveal" aria-label="Today's stats">
+      <div class="stat-grid">
+        <div class="stat-card" id="stat-savings" role="button" tabindex="0" aria-label="Go to Finance">
+          <div class="stat-card__label">Total savings</div>
+          <div class="stat-card__value" id="stat-savings-val">—</div>
+          <div class="stat-card__sub">finances</div>
+        </div>
+        <div class="stat-card" id="stat-todos" role="button" tabindex="0" aria-label="Go to Planner">
+          <div class="stat-card__label">Open todos</div>
+          <div class="stat-card__value" id="stat-todos-val">—</div>
+          <div class="stat-card__sub">tasks left</div>
+        </div>
+        <div class="stat-card" id="stat-schedule" role="button" tabindex="0" aria-label="Go to Planner">
+          <div class="stat-card__label">Today's blocks</div>
+          <div class="stat-card__value" id="stat-schedule-val">—</div>
+          <div class="stat-card__sub">scheduled</div>
+        </div>
+        <div class="stat-card" id="stat-habits" role="button" tabindex="0" aria-label="Go to Habits">
+          <div class="stat-card__label">Habits today</div>
+          <div class="stat-card__value" id="stat-habits-val">—</div>
+          <div class="stat-card__sub">done / total</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Schedule preview -->
+    <section class="home-schedule reveal" aria-label="Today's schedule">
+      <div class="section-header">
+        <h2 class="section-title">Today</h2>
+        <a href="planner.html" class="section-link">see all</a>
+      </div>
+      <div class="schedule-preview" id="schedule-preview">
+        <!-- rendered by home.js -->
+      </div>
+    </section>
+
+    <!-- Todo preview -->
+    <section class="home-todos reveal" aria-label="Open todos">
+      <div class="section-header">
+        <h2 class="section-title">Up next</h2>
+        <a href="planner.html" class="section-link">see all</a>
+      </div>
+      <ul class="todo-preview" id="todo-preview">
+        <!-- rendered by home.js -->
+      </ul>
+    </section>
+
+  </main>
+
+  <!-- Assistant bar -->
+  <div class="assistant" id="assistant">
+    <div class="assistant__bar">
+      <div class="assistant__toggle" id="assistant-toggle">
+        <div class="assistant__orb"></div>
+        <span class="assistant__name">Noc</span>
+      </div>
+      <div class="assistant__input-wrap">
+        <input type="text" class="assistant__input" id="assistant-input" placeholder="ask me anything or tell me what to add..." autocomplete="off">
+      </div>
+      <button class="assistant__send" id="assistant-send" aria-label="Send">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+      <button class="assistant__expand-btn" id="assistant-expand" aria-label="Expand">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="18 15 12 9 6 15"/></svg>
+      </button>
+    </div>
+    <div class="assistant__chat" id="assistant-chat"></div>
+  </div>
+
+  <script src="config.js" defer></script>
+  <script src="js/store.js" defer></script>
+  <script src="js/obsidian.js" defer></script>
+  <script src="js/assistant.js" defer></script>
+  <script src="js/home.js" defer></script>
+</body>
+</html>

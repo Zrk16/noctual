@@ -1,0 +1,292 @@
+/* ─── Finance page ────────────────────────────────────────────────────────── */
+
+/* ─── Total savings hero ──────────────────────────────────────────────────── */
+.savings-hero {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl) var(--space-lg);
+  text-align: center;
+  margin-bottom: var(--space-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.savings-hero::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #7CB98A40, transparent);
+}
+
+.savings-hero__label {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-sm);
+}
+
+.savings-hero__amount {
+  font-family: var(--font-mono);
+  font-size: clamp(3rem, 6vw, 5rem);
+  font-weight: 500;
+  color: #7CB98A;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.savings-hero__currency {
+  font-size: 0.4em;
+  color: #7CB98A;
+  opacity: 0.7;
+  vertical-align: super;
+  margin-right: 4px;
+}
+
+.savings-hero__updated {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin-top: var(--space-sm);
+}
+
+/* ─── Account breakdown ───────────────────────────────────────────────────── */
+.accounts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.account-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  transition: border-color var(--transition);
+}
+.account-card:hover { border-color: var(--text-dim); }
+
+.account-card__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-md);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.account-card__name {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-xs);
+}
+
+.account-card__amount {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xl);
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: -0.03em;
+}
+
+.account-card__bar {
+  height: 2px;
+  background: var(--border);
+  border-radius: 2px;
+  margin-top: var(--space-md);
+  overflow: hidden;
+}
+
+.account-card__bar-fill {
+  height: 100%;
+  background: #7CB98A;
+  border-radius: 2px;
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ─── Finance actions grid ────────────────────────────────────────────────── */
+.finance-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.finance-form {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+}
+
+.finance-form__title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.finance-form__title svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.finance-form--add .finance-form__title { color: #7CB98A; }
+.finance-form--spend .finance-form__title { color: #E05A5A; }
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
+}
+
+.form-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.btn--add { background: rgba(124, 185, 138, 0.15); color: #7CB98A; border: 1px solid rgba(124, 185, 138, 0.25); }
+.btn--add:hover { background: rgba(124, 185, 138, 0.25); opacity: 1; }
+.btn--spend { background: rgba(224, 90, 90, 0.12); color: #E05A5A; border: 1px solid rgba(224, 90, 90, 0.2); }
+.btn--spend:hover { background: rgba(224, 90, 90, 0.2); opacity: 1; }
+
+/* ─── Recurring income ────────────────────────────────────────────────────── */
+.recurring-section {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.recurring-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.recurring-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.recurring-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.recurring-item__name {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  color: var(--text);
+}
+
+.recurring-item__amount {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: #7CB98A;
+  font-weight: 500;
+}
+
+.recurring-item__freq {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  padding: 2px 8px;
+  background: var(--surface-2);
+  border-radius: 100px;
+}
+
+.recurring-item__account {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+/* ─── Transaction history ─────────────────────────────────────────────────── */
+.tx-section {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+}
+
+.tx-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--border);
+}
+.tx-item:last-child { border-bottom: none; }
+
+.tx-item__desc {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  color: var(--text);
+}
+
+.tx-item__account {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  padding: 2px 8px;
+  background: var(--surface);
+  border-radius: 100px;
+}
+
+.tx-item__amount {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  min-width: 80px;
+  text-align: right;
+}
+
+.tx-item__amount--in { color: #7CB98A; }
+.tx-item__amount--out { color: #E05A5A; }
+
+.tx-item__date {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  min-width: 70px;
+  text-align: right;
+}
+
+@media (max-width: 768px) {
+  .accounts-grid { grid-template-columns: 1fr; }
+  .finance-actions { grid-template-columns: 1fr; }
+}
