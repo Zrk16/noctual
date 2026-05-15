@@ -126,7 +126,7 @@ const Notes = (() => {
     saveTimer = setTimeout(saveNote, 600);
 
     if (linkTimer) clearTimeout(linkTimer);
-    linkTimer = setTimeout(autoLink, 3000);
+    linkTimer = setTimeout(autoLink, 1500);
   };
 
   /* ── AI auto-linking ───────────────────────────────────────────────────── */
@@ -354,6 +354,7 @@ Respond with ONLY the JSON array. No explanation.`;
       renderList();
       openNote(note.id);
       setTimeout(() => getEl('note-title')?.focus(), 50);
+      if (Store.notes.getAll().length >= 2) autoLink();
     });
 
     getEl('graph-toggle-btn')?.addEventListener('click', openGraph);
