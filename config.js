@@ -1,4 +1,7 @@
 const CONFIG = {
+  SUPABASE_URL: 'https://rfjcqagoaqnbalesqmhd.supabase.co',
+  SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmamNxYWdvYXFuYmFsZXNxbWhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MjcwNjQsImV4cCI6MjA5NDQwMzA2NH0.iT9OE1NzTjcZ19xqhtVAqb_9sCRq3f1P2B3TYT84v-Q',
+
   NVIDIA_API_KEY: null, // stored in Vercel env var NVIDIA_API_KEY — never expose in frontend
   NVIDIA_BASE_URL: '/api',
   NVIDIA_MODEL: 'llama-3.1-8b-instant',

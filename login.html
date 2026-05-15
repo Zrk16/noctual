@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nocual — Sign In</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0D0D0D">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-1024.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Grotesk:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0D0D0D;
+      --surface: #161616;
+      --border: #2a2a2a;
+      --text: #F0EDE8;
+      --text-muted: #888;
+      --accent: #E8541A;
+      --font-display: 'Syne', sans-serif;
+      --font-body: 'Space Grotesk', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .login-wrap {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-logo {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 4px;
+    }
+
+    .login-sub {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 48px;
+    }
+
+    .login-heading {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .login-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .login-input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 15px;
+      padding: 12px 16px;
+      outline: none;
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+
+    .login-input:focus {
+      border-color: var(--accent);
+    }
+
+    .login-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .login-btn {
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      padding: 12px 20px;
+      transition: opacity 0.15s;
+    }
+
+    .login-btn:hover { opacity: 0.88; }
+    .login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .login-status {
+      display: none;
+      margin-top: 20px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .login-status.show { display: block; }
+
+    .login-status__title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .login-status__text {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .login-error {
+      display: none;
+      margin-top: 12px;
+      font-size: 13px;
+      color: #e05;
+      font-family: var(--font-mono);
+    }
+
+    .login-error.show { display: block; }
+  </style>
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-logo">Nocual</div>
+    <div class="login-sub">personal OS</div>
+
+    <h1 class="login-heading">Sign in</h1>
+    <p class="login-desc">Enter your email and we'll send you a magic link. No password needed.</p>
+
+    <form class="login-form" id="login-form">
+      <input
+        class="login-input"
+        type="email"
+        id="email-input"
+        placeholder="your@email.com"
+        required
+        autocomplete="email"
+      >
+      <button class="login-btn" type="submit" id="login-btn">Send magic link</button>
+    </form>
+
+    <div class="login-status" id="login-status">
+      <div class="login-status__title">Check your email</div>
+      <div class="login-status__text">Magic link sent. Click it to sign in — you can close this tab.</div>
+    </div>
+
+    <div class="login-error" id="login-error"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script>
+    const _db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+
+    // If already signed in, go home
+    _db.auth.getSession().then(({ data: { session } }) => {
+      if (session) location.replace('/index.html');
+    });
+
+    // Handle magic link callback (hash fragment from email link)
+    _db.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN') location.replace('/index.html');
+    });
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email-input').value.trim();
+      const btn   = document.getElementById('login-btn');
+      const status = document.getElementById('login-status');
+      const errEl  = document.getElementById('login-error');
+
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+      errEl.className = 'login-error';
+
+      const { error } = await _db.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: location.origin + '/index.html' },
+      });
+
+      if (error) {
+        errEl.textContent = error.message;
+        errEl.className = 'login-error show';
+        btn.disabled = false;
+        btn.textContent = 'Send magic link';
+      } else {
+        status.className = 'login-status show';
+        document.getElementById('login-form').style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>

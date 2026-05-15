@@ -1,139 +1,200 @@
 const Store = (() => {
-  const KEYS = {
-    todos: 'nocual_todos',
-    schedule: 'nocual_schedule',
-    finances: 'nocual_finances',
-    habits: 'nocual_habits',
-    habitLogs: 'nocual_habit_logs',
-    roasts: 'nocual_roasts',
-    chatHistory: 'nocual_chat_history',
-    recurring: 'nocual_recurring',
+  const cache = {
+    todos: [], scheduleBlocks: [], transactions: [], recurring: [],
+    habits: [], habitLogs: [], roasts: [], chatHistory: [],
+  };
+  let _userId = null;
+  let _realtimeChannel = null;
+
+  const uid = () => crypto.randomUUID();
+  const today = () => new Date().toISOString().split('T')[0];
+  const notify = () => window.dispatchEvent(new CustomEvent('nocual:update'));
+
+  const norm = {
+    todo:  r => ({ id: r.id, text: r.text, priority: r.priority, done: r.done, createdAt: r.created_at, doneAt: r.done_at }),
+    block: r => ({ id: r.id, date: r.date, time: r.time, text: r.text }),
+    tx:    r => ({ id: r.id, type: r.type, amount: r.amount, description: r.description, account: r.account, createdAt: r.created_at }),
+    rec:   r => ({ id: r.id, name: r.name, amount: r.amount, frequency: r.frequency, account: r.account, createdAt: r.created_at }),
+    habit: r => ({ id: r.id, name: r.name, createdAt: r.created_at }),
+    log:   r => ({ habitId: r.habit_id, date: r.date }),
+    roast: r => ({ id: r.id, text: r.text, weekLabel: r.week_label, createdAt: r.created_at }),
+    chat:  r => ({ role: r.role, content: r.content, timestamp: r.timestamp }),
   };
 
-  const uid = () => Math.random().toString(36).slice(2, 9);
+  async function _refresh() {
+    const [
+      { data: todosData }, { data: blocksData }, { data: txData }, { data: recData },
+      { data: habitsData }, { data: logsData }, { data: roastsData }, { data: chatData },
+    ] = await Promise.all([
+      DB.from('todos').select('*').order('created_at', { ascending: false }),
+      DB.from('schedule_blocks').select('*'),
+      DB.from('transactions').select('*').order('created_at', { ascending: false }),
+      DB.from('recurring').select('*').order('created_at', { ascending: true }),
+      DB.from('habits').select('*').order('created_at', { ascending: true }),
+      DB.from('habit_logs').select('*'),
+      DB.from('roasts').select('*').order('created_at', { ascending: false }),
+      DB.from('chat_history').select('*').order('timestamp', { ascending: true }).limit(50),
+    ]);
+    cache.todos        = (todosData   ?? []).map(norm.todo);
+    cache.scheduleBlocks = (blocksData ?? []).map(norm.block);
+    cache.transactions = (txData      ?? []).map(norm.tx);
+    cache.recurring    = (recData     ?? []).map(norm.rec);
+    cache.habits       = (habitsData  ?? []).map(norm.habit);
+    cache.habitLogs    = (logsData    ?? []).map(norm.log);
+    cache.roasts       = (roastsData  ?? []).map(norm.roast);
+    cache.chatHistory  = (chatData    ?? []).map(norm.chat);
+    notify();
+  }
 
-  const get = (key) => {
-    try { return JSON.parse(localStorage.getItem(key)) ?? []; }
-    catch { return []; }
-  };
+  async function _init() {
+    const { data: { session } } = await DB.auth.getSession();
+    _userId = session?.user?.id ?? null;
+    if (!_userId) return;
+    await _refresh();
+    _setupRealtime();
+  }
 
-  const set = (key, data) => {
-    localStorage.setItem(key, JSON.stringify(data));
-    window.dispatchEvent(new CustomEvent('nocual:update', { detail: { key } }));
-  };
+  function _setupRealtime() {
+    if (_realtimeChannel) return;
+    _realtimeChannel = DB.channel('nocual')
+      .on('postgres_changes', { event: '*', schema: 'public' }, _refresh)
+      .subscribe();
+  }
+
+  _init();
 
   /* ── Todos ─────────────────────────────────────────────────────────────── */
   const todos = {
-    getAll: () => get(KEYS.todos),
+    getAll: () => cache.todos,
     add: (text, priority = 'normal') => {
-      const items = todos.getAll();
-      const item = { id: uid(), text, priority, done: false, createdAt: Date.now() };
-      set(KEYS.todos, [item, ...items]);
+      const item = { id: uid(), text, priority, done: false, createdAt: Date.now(), doneAt: null };
+      cache.todos.unshift(item);
+      notify();
+      DB.from('todos').insert({ id: item.id, text, priority, done: false, created_at: item.createdAt, user_id: _userId }).catch(console.error);
       return item;
     },
     toggle: (id) => {
-      const items = todos.getAll().map(t => t.id === id ? { ...t, done: !t.done, doneAt: Date.now() } : t);
-      set(KEYS.todos, items);
+      const todo = cache.todos.find(t => t.id === id);
+      if (!todo) return;
+      const done = !todo.done;
+      const doneAt = done ? Date.now() : null;
+      Object.assign(todo, { done, doneAt });
+      notify();
+      DB.from('todos').update({ done, done_at: doneAt }).eq('id', id).catch(console.error);
     },
-    delete: (id) => set(KEYS.todos, todos.getAll().filter(t => t.id !== id)),
+    delete: (id) => {
+      cache.todos = cache.todos.filter(t => t.id !== id);
+      notify();
+      DB.from('todos').delete().eq('id', id).catch(console.error);
+    },
     update: (id, changes) => {
-      set(KEYS.todos, todos.getAll().map(t => t.id === id ? { ...t, ...changes } : t));
+      const todo = cache.todos.find(t => t.id === id);
+      if (!todo) return;
+      Object.assign(todo, changes);
+      notify();
+      const dbChanges = {};
+      if ('text'     in changes) dbChanges.text     = changes.text;
+      if ('priority' in changes) dbChanges.priority = changes.priority;
+      if ('done'     in changes) dbChanges.done     = changes.done;
+      if ('doneAt'   in changes) dbChanges.done_at  = changes.doneAt;
+      DB.from('todos').update(dbChanges).eq('id', id).catch(console.error);
     },
   };
 
   /* ── Schedule ──────────────────────────────────────────────────────────── */
   const schedule = {
-    getDay: (date) => {
-      const all = get(KEYS.schedule);
-      return (all.find(d => d.date === date)?.blocks ?? []).sort((a, b) => a.time.localeCompare(b.time));
-    },
+    getDay: (date) => cache.scheduleBlocks.filter(b => b.date === date).sort((a, b) => a.time.localeCompare(b.time)),
     addBlock: (date, time, text) => {
-      const all = get(KEYS.schedule);
-      const existing = all.find(d => d.date === date);
-      const block = { id: uid(), time, text };
-      if (existing) {
-        existing.blocks.push(block);
-      } else {
-        all.push({ date, blocks: [block] });
-      }
-      set(KEYS.schedule, all);
+      const block = { id: uid(), date, time, text };
+      cache.scheduleBlocks.push(block);
+      notify();
+      DB.from('schedule_blocks').insert({ id: block.id, date, time, text, user_id: _userId }).catch(console.error);
       return block;
     },
     deleteBlock: (date, blockId) => {
-      const all = get(KEYS.schedule).map(d =>
-        d.date === date ? { ...d, blocks: d.blocks.filter(b => b.id !== blockId) } : d
-      );
-      set(KEYS.schedule, all);
+      cache.scheduleBlocks = cache.scheduleBlocks.filter(b => b.id !== blockId);
+      notify();
+      DB.from('schedule_blocks').delete().eq('id', blockId).catch(console.error);
     },
-    getDaysWithEvents: () => get(KEYS.schedule).map(d => d.date),
+    getDaysWithEvents: () => [...new Set(cache.scheduleBlocks.map(b => b.date))],
   };
 
   /* ── Finances ──────────────────────────────────────────────────────────── */
   const finances = {
-    getAll: () => get(KEYS.finances),
+    getAll: () => cache.transactions,
     getAccounts: () => {
-      const txs = finances.getAll();
       const accounts = { gcash: 0, card: 0, cash: 0 };
-      txs.forEach(tx => {
-        const sign = tx.type === 'in' ? 1 : -1;
-        accounts[tx.account] = (accounts[tx.account] ?? 0) + sign * tx.amount;
+      cache.transactions.forEach(tx => {
+        accounts[tx.account] = (accounts[tx.account] ?? 0) + (tx.type === 'in' ? 1 : -1) * tx.amount;
       });
       return accounts;
     },
     getTotal: () => Object.values(finances.getAccounts()).reduce((a, b) => a + b, 0),
     addTransaction: (type, amount, description, account) => {
-      const txs = finances.getAll();
       const tx = { id: uid(), type, amount: parseFloat(amount), description, account, createdAt: Date.now() };
-      set(KEYS.finances, [tx, ...txs]);
+      cache.transactions.unshift(tx);
+      notify();
+      DB.from('transactions').insert({ id: tx.id, type, amount: tx.amount, description, account, created_at: tx.createdAt, user_id: _userId }).catch(console.error);
       return tx;
     },
-    deleteTransaction: (id) => set(KEYS.finances, finances.getAll().filter(t => t.id !== id)),
+    deleteTransaction: (id) => {
+      cache.transactions = cache.transactions.filter(t => t.id !== id);
+      notify();
+      DB.from('transactions').delete().eq('id', id).catch(console.error);
+    },
   };
 
   /* ── Recurring ─────────────────────────────────────────────────────────── */
   const recurring = {
-    getAll: () => get(KEYS.recurring),
+    getAll: () => cache.recurring,
     add: (name, amount, frequency, account) => {
-      const items = recurring.getAll();
       const item = { id: uid(), name, amount: parseFloat(amount), frequency, account, createdAt: Date.now() };
-      set(KEYS.recurring, [...items, item]);
+      cache.recurring.push(item);
+      notify();
+      DB.from('recurring').insert({ id: item.id, name, amount: item.amount, frequency, account, created_at: item.createdAt, user_id: _userId }).catch(console.error);
       return item;
     },
-    delete: (id) => set(KEYS.recurring, recurring.getAll().filter(r => r.id !== id)),
+    delete: (id) => {
+      cache.recurring = cache.recurring.filter(r => r.id !== id);
+      notify();
+      DB.from('recurring').delete().eq('id', id).catch(console.error);
+    },
   };
 
   /* ── Habits ────────────────────────────────────────────────────────────── */
   const habits = {
-    getAll: () => get(KEYS.habits),
+    getAll: () => cache.habits,
     add: (name) => {
-      const items = habits.getAll();
       const item = { id: uid(), name, createdAt: Date.now() };
-      set(KEYS.habits, [...items, item]);
+      cache.habits.push(item);
+      notify();
+      DB.from('habits').insert({ id: item.id, name, created_at: item.createdAt, user_id: _userId }).catch(console.error);
       return item;
     },
     delete: (id) => {
-      set(KEYS.habits, habits.getAll().filter(h => h.id !== id));
-      const logs = get(KEYS.habitLogs).filter(l => l.habitId !== id);
-      localStorage.setItem(KEYS.habitLogs, JSON.stringify(logs));
+      cache.habits    = cache.habits.filter(h => h.id !== id);
+      cache.habitLogs = cache.habitLogs.filter(l => l.habitId !== id);
+      notify();
+      DB.from('habits').delete().eq('id', id).catch(console.error);
     },
     isDoneToday: (id) => {
-      const today = new Date().toISOString().split('T')[0];
-      return get(KEYS.habitLogs).some(l => l.habitId === id && l.date === today);
+      const todayStr = today();
+      return cache.habitLogs.some(l => l.habitId === id && l.date === todayStr);
     },
     toggleToday: (id) => {
-      const today = new Date().toISOString().split('T')[0];
-      const logs = get(KEYS.habitLogs);
-      const existing = logs.findIndex(l => l.habitId === id && l.date === today);
-      if (existing >= 0) {
-        logs.splice(existing, 1);
+      const todayStr = today();
+      const idx = cache.habitLogs.findIndex(l => l.habitId === id && l.date === todayStr);
+      if (idx >= 0) {
+        cache.habitLogs.splice(idx, 1);
+        DB.from('habit_logs').delete().eq('habit_id', id).eq('date', todayStr).catch(console.error);
       } else {
-        logs.push({ habitId: id, date: today });
+        cache.habitLogs.push({ habitId: id, date: todayStr });
+        DB.from('habit_logs').insert({ id: uid(), habit_id: id, date: todayStr, user_id: _userId }).catch(console.error);
       }
-      localStorage.setItem(KEYS.habitLogs, JSON.stringify(logs));
-      window.dispatchEvent(new CustomEvent('nocual:update', { detail: { key: KEYS.habitLogs } }));
+      notify();
     },
     getStreak: (id) => {
-      const logs = get(KEYS.habitLogs).filter(l => l.habitId === id).map(l => l.date).sort().reverse();
+      const logs = cache.habitLogs.filter(l => l.habitId === id).map(l => l.date).sort().reverse();
       let streak = 0;
       let d = new Date();
       for (const log of logs) {
@@ -147,33 +208,38 @@ const Store = (() => {
 
   /* ── Roasts ────────────────────────────────────────────────────────────── */
   const roasts = {
-    getAll: () => get(KEYS.roasts),
+    getAll: () => cache.roasts,
     add: (text, weekLabel) => {
-      const items = roasts.getAll();
       const item = { id: uid(), text, weekLabel, createdAt: Date.now() };
-      set(KEYS.roasts, [item, ...items]);
+      cache.roasts.unshift(item);
+      notify();
+      DB.from('roasts').insert({ id: item.id, text, week_label: weekLabel, created_at: item.createdAt, user_id: _userId }).catch(console.error);
       return item;
     },
   };
 
   /* ── Chat ──────────────────────────────────────────────────────────────── */
   const chat = {
-    getHistory: () => get(KEYS.chatHistory),
+    getHistory: () => cache.chatHistory,
     addMessage: (role, content) => {
-      const history = chat.getHistory();
       const msg = { role, content, timestamp: Date.now() };
-      const trimmed = [...history, msg].slice(-50);
-      set(KEYS.chatHistory, trimmed);
+      cache.chatHistory = [...cache.chatHistory, msg].slice(-50);
+      notify();
+      DB.from('chat_history').insert({ id: uid(), role, content, timestamp: msg.timestamp, user_id: _userId }).catch(console.error);
       return msg;
     },
-    clear: () => set(KEYS.chatHistory, []),
+    clear: () => {
+      cache.chatHistory = [];
+      notify();
+      if (_userId) DB.from('chat_history').delete().eq('user_id', _userId).catch(console.error);
+    },
   };
 
   /* ── Full context snapshot (for AI) ───────────────────────────────────── */
   const getContext = () => ({
-    date: new Date().toISOString().split('T')[0],
+    date: today(),
     todos: todos.getAll().slice(0, 30),
-    todaySchedule: schedule.getDay(new Date().toISOString().split('T')[0]),
+    todaySchedule: schedule.getDay(today()),
     finances: {
       accounts: finances.getAccounts(),
       total: finances.getTotal(),

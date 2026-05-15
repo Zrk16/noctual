@@ -1,4 +1,4 @@
-const CACHE = 'noctual-v1';
+const CACHE = 'noctual-v2';
 const STATIC = [
   '/',
   '/index.html',
@@ -8,6 +8,7 @@ const STATIC = [
   '/roast.html',
   '/hype.html',
   '/that-thing.html',
+  '/login.html',
   '/config.js',
   '/manifest.json',
   '/css/global.css',
@@ -16,6 +17,7 @@ const STATIC = [
   '/css/finance.css',
   '/css/pages.css',
   '/css/mobile.css',
+  '/js/db.js',
   '/js/store.js',
   '/js/assistant.js',
   '/js/obsidian.js',
